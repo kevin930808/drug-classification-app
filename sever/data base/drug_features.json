@@ -1,0 +1,103 @@
+{
+    "drugs": {
+      "得安穩": {
+        "name_zh": "得安穩",
+        "name_en": "Diovan",
+        "features": {
+          "color": "pink",
+          "shape": "pill_round",
+          "letter": ["stright", "word"]
+        }
+      },
+      "捷賜瑞": {
+        "name_zh": "捷賜瑞錠",
+        "name_en": "Zestril",
+        "features": {
+          "color": "pink",
+          "shape": "pill_round",
+          "letter": ["word", "other"]
+        }
+      },
+      "雅脈": {
+        "name_zh": "雅脈",
+        "name_en": "OLMESARTAN MEDOXOMIL",
+        "features": {
+          "color": "white",
+          "shape": "pill_round",
+          "letter": ["word"]
+        }
+      },
+      "可悅您": {
+        "name_zh": "可悅您",
+        "name_en": "Cozaar",
+        "features": {
+          "color": "white",
+          "shape": "pill_oval",
+          "letter": ["stright", "word"]
+        }
+      },
+      "脈優": {
+        "name_zh": "脈優",
+        "name_en": "Norvasc",
+        "features": {
+          "color": "white",
+          "shape": "pill_octagon",
+          "letter": ["stright", "word"]
+        }
+      },
+      "易安穩": {
+        "name_zh": "易安穩",
+        "name_en": "Exforge",
+        "features": {
+          "color": "yellow",
+          "shape": "pill_round",
+          "letter": ["word"]
+        }
+      },
+      "天諾敏": {
+        "name_zh": "天諾敏",
+        "name_en": "Tenormin",
+        "features": {
+          "color": "white",
+          "shape": "pill_round",
+          "letter": ["stright", "word"]
+        }
+      },
+      "康肯": {
+        "name_zh": "康肯",
+        "name_en": "Concor",
+        "features": {
+          "color": "yellow",
+          "shape": "pill_round",
+          "letter": ["stright"]
+        }
+      },
+      "得安穩160": {
+        "name_zh": "得安穩膜衣錠160毫克",
+        "name_en": "DIOVAN FILM-COATED TABLETS 160MG",
+        "features": {
+          "color": "yellow",
+          "shape": "pill_oval",
+          "letter": ["stright", "word"]
+        }
+      },
+      "博脈舒": {
+        "name_zh": "博脈舒錠 8公絲",
+        "name_en": "Candesartan 8mg",
+        "features": {
+          "color": "pink",
+          "shape": "pill_round",
+          "letter": ["stright"]
+        }
+      },
+      "利壓": {
+        "name_zh": "利壓膜衣錠10公絲",
+        "name_en": "ZANIDIP FC TAB 10 MG",
+        "features": {
+          "color": "yellow",
+          "shape": "pill_round",
+          "letter": ["stright"]
+        }
+      }
+    }
+  }

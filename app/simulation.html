@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>藥物辨識系統 - 模擬</title>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+        }
+        .iphone-container {
+            width: 393px;
+            height: 852px;
+            background: #000;
+            border-radius: 55px;
+            position: relative;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transform-origin: top center;
+        }
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .dynamic-island-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 14px;
+        }
+        .dynamic-island-icon {
+            width: 20px;
+            height: 20px;
+            background: #007AFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .dynamic-island-text {
+            font-weight: 500;
+        }
+        .iphone-screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+        .status-bar {
+            height: 44px;
+            background: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 14px;
+            color: #000;
+            position: relative;
+            z-index: 1;
+            margin-top: 8px;
+        }
+        .time {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .status-icons {
+            display: flex;
+            gap: 4px;
+            font-size: 14px;
+        }
+        .page {
+            height: 100%;
+            background-color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s ease;
+            opacity: 1;
+            visibility: visible;
+        }
+        .page.hidden {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(100%);
+        }
+        .page.hidden-left {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-100%);
+        }
+        .page.hidden-right {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(100%);
+        }
+        .page-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+        .page-buttons {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 15px 0;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .camera-container {
+            width: 100%;
+            height: 400px;
+            margin: 20px auto;
+            position: relative;
+            background: #f0f0f0;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #007AFF;
+        }
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.1);
+        }
+        .camera-text {
+            font-size: 28px;
+            color: #007AFF;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .camera-guide {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            border: 2px dashed #007AFF;
+            border-radius: 15px;
+            opacity: 0.5;
+        }
+        .medicine-preview {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #007AFF;
+            font-weight: bold;
+        }
+        .button {
+            background-color: #007AFF;
+            color: white;
+            padding: 20px 30px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 24px;
+            margin: 15px 0;
+            width: 100%;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,122,255,0.3);
+        }
+        .button.secondary {
+            background-color: #FF3B30;
+        }
+        .button.secondary:hover {
+            box-shadow: 0 5px 15px rgba(255,59,48,0.3);
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .action-button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: #f0f0f0;
+            color: #000;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .action-button:hover {
+            background: #e0e0e0;
+        }
+        .medicine-info {
+            margin: 20px 0;
+            padding: 25px;
+            background-color: #f8f8f8;
+            border-radius: 20px;
+            animation: slideIn 0.5s ease-out;
+        }
+        .medicine-info p {
+            font-size: 22px;
+            line-height: 1.6;
+            margin: 15px 0;
+            color: #000;
+        }
+        .medicine-sample {
+            width: 100%;
+            height: 200px;
+            background: #fff;
+            border-radius: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .medicine-sample-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8f8f8;
+            color: #666;
+            font-size: 16px;
+        }
+        .medicine-sample-placeholder span {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .history-list {
+            margin-top: 25px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 15px;
+            border-bottom: 2px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 20px;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .highlight {
+            background: #007AFF;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 18px;
+            margin-left: 12px;
+            font-weight: bold;
+        }
+        h1, h2 {
+            color: #000;
+            margin: 0 0 20px 0;
+            font-weight: bold;
+            font-size: 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="iphone-container">
+        <div class="dynamic-island">
+            <div class="dynamic-island-content">
+                <div class="dynamic-island-icon">📷</div>
+                <div class="dynamic-island-text">藥物辨識中</div>
+            </div>
+        </div>
+        <div class="iphone-screen">
+            <div class="status-bar">
+                <div class="time">9:41</div>
+                <div class="status-icons">
+                    <span>📶</span>
+                    <span>📶</span>
+                    <span>📶</span>
+                    <span>🔋</span>
+                </div>
+            </div>
+
+            <!-- 第一頁：拍照介面 -->
+            <div class="page" id="page1">
+                <h1>藥物辨識系統</h1>
+                <div class="camera-container">
+                    <div class="camera-overlay">
+                        <div class="camera-guide"></div>
+                        <div class="medicine-preview">
+                            普拿疼
+                        </div>
+                    </div>
+                    <div class="camera-text">
+                        請將藥物放在框內
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="action-button" onclick="showAlbum()">
+                        <span>📷</span> 從相冊選擇
+                    </button>
+                    <button class="action-button" onclick="showHistory()">
+                        <span>📋</span> 查看歷史
+                    </button>
+                </div>
+                <button class="button" style="animation: pulse 2s infinite;" onclick="navigateToPage(2)">點擊拍照</button>
+            </div>
+
+            <!-- 第二頁：確認照片 -->
+            <div class="page hidden" id="page2">
+                <div class="page-content" style="overflow: hidden;">
+                    <h2>請確認照片</h2>
+                    <div class="camera-container" style="height: 300px;">
+                        <div class="camera-overlay">
+                            <div class="medicine-preview">
+                                普拿疼
+                            </div>
+                        </div>
+                    </div>
+                    <div class="medicine-info" style="margin-top: 20px;">
+                        <p>照片已拍攝完成，是否要傳送進行辨識？</p>
+                    </div>
+                </div>
+                <div class="page-buttons">
+                    <button class="button" onclick="navigateToPage(3)">確認並辨識</button>
+                    <button class="button secondary" onclick="navigateToPage(1)">重新拍攝</button>
+                </div>
+            </div>
+
+            <!-- 第三頁：藥物資訊 -->
+            <div class="page hidden" id="page3">
+                <div class="page-content">
+                    <h2>藥物詳細資訊</h2>
+                    <div class="medicine-sample">
+                        <div class="medicine-sample-placeholder">
+                            <span>💊</span>
+                            <div>藥物樣品圖</div>
+                        </div>
+                    </div>
+                    <div class="medicine-info">
+                        <p>藥物名稱：普拿疼 <span class="highlight">已辨識</span></p>
+                        <p>使用方式：每次1-2錠，每4-6小時一次</p>
+                        <p>注意事項：請勿超過每日最大劑量8錠</p>
+                    </div>
+                </div>
+                <div class="page-buttons">
+                    <button class="button" onclick="navigateToPage(1)">返回拍照</button>
+                    <button class="button secondary" onclick="reportIssue()">回報問題</button>
+                </div>
+            </div>
+
+            <!-- 第四頁：歷史紀錄 -->
+            <div class="page hidden" id="page4">
+                <div class="page-content">
+                    <h2>歷史紀錄</h2>
+                    <div class="history-list">
+                        <div class="history-item" onclick="showMedicineInfo('普拿疼')">
+                            <span>普拿疼</span>
+                            <span>2024-03-20 14:30</span>
+                        </div>
+                        <div class="history-item" onclick="showMedicineInfo('阿斯匹靈')">
+                            <span>阿斯匹靈</span>
+                            <span>2024-03-19 16:45</span>
+                        </div>
+                        <div class="history-item" onclick="showMedicineInfo('布洛芬')">
+                            <span>布洛芬</span>
+                            <span>2024-03-18 09:15</span>
+                        </div>
+                        <div class="history-item" onclick="showMedicineInfo('感冒藥')">
+                            <span>感冒藥</span>
+                            <span>2024-03-17 11:20</span>
+                        </div>
+                        <div class="history-item" onclick="showMedicineInfo('維他命C')">
+                            <span>維他命C</span>
+                            <span>2024-03-16 13:40</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-buttons">
+                    <button class="button" onclick="navigateToPage(1)">返回拍照</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function navigateToPage(pageNumber) {
+            const pages = document.querySelectorAll('.page');
+            const currentPage = document.querySelector('.page:not(.hidden):not(.hidden-left):not(.hidden-right)');
+            const targetPage = document.getElementById(`page${pageNumber}`);
+            
+            if (currentPage && targetPage) {
+                // 更新靈動島內容
+                updateDynamicIsland(pageNumber);
+                
+                // 先隱藏當前頁面
+                currentPage.classList.add('hidden');
+                
+                // 顯示目標頁面
+                targetPage.classList.remove('hidden');
+                targetPage.classList.remove('hidden-left');
+                targetPage.classList.remove('hidden-right');
+            }
+        }
+
+        function updateDynamicIsland(pageNumber) {
+            const dynamicIsland = document.querySelector('.dynamic-island-content');
+            switch(pageNumber) {
+                case 1:
+                    dynamicIsland.innerHTML = `
+                        <div class="dynamic-island-icon">📷</div>
+                        <div class="dynamic-island-text">藥物辨識中</div>
+                    `;
+                    break;
+                case 2:
+                    dynamicIsland.innerHTML = `
+                        <div class="dynamic-island-icon">✓</div>
+                        <div class="dynamic-island-text">照片已拍攝</div>
+                    `;
+                    break;
+                case 3:
+                    dynamicIsland.innerHTML = `
+                        <div class="dynamic-island-icon">💊</div>
+                        <div class="dynamic-island-text">普拿疼</div>
+                    `;
+                    break;
+                case 4:
+                    dynamicIsland.innerHTML = `
+                        <div class="dynamic-island-icon">📋</div>
+                        <div class="dynamic-island-text">歷史紀錄</div>
+                    `;
+                    break;
+            }
+        }
+
+        function showToast(message) {
+            // 創建提示元素
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 16px;
+                z-index: 1000;
+                animation: fadeIn 0.3s ease, fadeOut 0.3s ease 2s forwards;
+            `;
+            toast.textContent = message;
+            
+            // 添加到頁面
+            document.body.appendChild(toast);
+            
+            // 3秒後移除
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function showHistory() {
+            navigateToPage(4);
+        }
+
+        function showAlbum() {
+            showToast('相冊功能開發中');
+        }
+
+        function showMedicineInfo(medicineName) {
+            // 更新藥物資訊頁面的內容
+            const medicineInfo = document.querySelector('#page3 .medicine-info');
+            const medicineSample = document.querySelector('#page3 .medicine-sample-placeholder div');
+            
+            // 根據藥物名稱更新資訊
+            let info = '';
+            switch(medicineName) {
+                case '普拿疼':
+                    info = `
+                        <p>藥物名稱：普拿疼 <span class="highlight">已辨識</span></p>
+                        <p>使用方式：每次1-2錠，每4-6小時一次</p>
+                        <p>注意事項：請勿超過每日最大劑量8錠</p>
+                    `;
+                    break;
+                case '阿斯匹靈':
+                    info = `
+                        <p>藥物名稱：阿斯匹靈 <span class="highlight">已辨識</span></p>
+                        <p>使用方式：每次1錠，每4-6小時一次</p>
+                        <p>注意事項：空腹時請勿服用</p>
+                    `;
+                    break;
+                case '布洛芬':
+                    info = `
+                        <p>藥物名稱：布洛芬 <span class="highlight">已辨識</span></p>
+                        <p>使用方式：每次1錠，每6-8小時一次</p>
+                        <p>注意事項：飯後服用</p>
+                    `;
+                    break;
+                case '感冒藥':
+                    info = `
+                        <p>藥物名稱：感冒藥 <span class="highlight">已辨識</span></p>
+                        <p>使用方式：每次1包，每6小時一次</p>
+                        <p>注意事項：服用後請勿開車</p>
+                    `;
+                    break;
+                case '維他命C':
+                    info = `
+                        <p>藥物名稱：維他命C <span class="highlight">已辨識</span></p>
+                        <p>使用方式：每次1錠，每日1-2次</p>
+                        <p>注意事項：飯後服用效果較好</p>
+                    `;
+                    break;
+            }
+            
+            medicineInfo.innerHTML = info;
+            medicineSample.textContent = medicineName;
+            
+            // 切換到藥物資訊頁面
+            navigateToPage(3);
+        }
+
+        function reportIssue() {
+            showToast('已回報問題');
+            setTimeout(() => {
+                navigateToPage(1);
+            }, 500);
+        }
+
+        // 添加按鈕點擊效果
+        document.querySelectorAll('.button, .action-button').forEach(button => {
+            button.addEventListener('click', function() {
+                this.style.animation = 'buttonPress 0.2s ease';
+                setTimeout(() => {
+                    this.style.animation = '';
+                }, 200);
+            });
+        });
+
+        // 添加重新拍攝按鈕點擊事件
+        document.querySelectorAll('.button[onclick="navigateToPage(1)"]').forEach(button => {
+            button.addEventListener('click', function() {
+                showToast('返回拍照介面');
+                setTimeout(() => {
+                    navigateToPage(1);
+                }, 500);
+            });
+        });
+
+        // 添加拍照按鈕點擊事件
+        document.querySelector('.button[onclick="navigateToPage(2)"]').addEventListener('click', function() {
+            showToast('照片已拍攝');
+            setTimeout(() => {
+                navigateToPage(2);
+            }, 500);
+        });
+
+        // 添加確認辨識按鈕點擊事件
+        document.querySelector('.button[onclick="navigateToPage(3)"]').addEventListener('click', function() {
+            showToast('正在辨識中...');
+            setTimeout(() => {
+                navigateToPage(3);
+            }, 1500);
+        });
+    </script>
+</body>
+</html> 
