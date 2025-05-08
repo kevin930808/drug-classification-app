@@ -34,7 +34,7 @@ async def detect_features(file: UploadFile = File(...)):
         shape_and_crop = shape_detect.process_image(img_array, shape_detect.load_model("model_v4.pt"))
         shape=shape_and_crop[0]
         crop=shape_and_crop[1]
-        crop = image_enhancement.enhance_image(crop)
+        #crop = image_enhancement.enhance_image(crop)
         letter_labels = letter_detect.process_image(img_array, letter_detect.load_model("model_刻字v3.pt"))
         color_labels = color_detect.process_image(crop, color_detect.load_model("model_color_v5.pt"))
         # 返回檢測結果
