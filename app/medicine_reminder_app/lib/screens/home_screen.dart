@@ -105,29 +105,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isCameraInitialized && cameras.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('沒有可用的相機')),
+      );
+    }
+  }
+
   Future<void> _initializeCamera() async {
     try {
       if (cameras.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('沒有可用的相機')),
-          );
-        }
         return;
       }
 
       _cameraController = CameraController(
         cameras[0],
-        ResolutionPreset.medium,
+        ResolutionPreset.high,  // 使用高解析度預設值
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
 
       await _cameraController.initialize();
       
-      // 設置最佳幀率
+      // 優化相機設定
       await _cameraController.setFocusMode(FocusMode.auto);
       await _cameraController.setExposureMode(ExposureMode.auto);
+      await _cameraController.setFlashMode(FlashMode.auto);
       
       if (mounted) {
         setState(() {
@@ -345,11 +351,48 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
 
     return Container(
-      child: AspectRatio(
-        aspectRatio: _cameraController.value.aspectRatio,
-        child: CameraPreview(_cameraController),
+      color: Colors.black,
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: 4/5,
+          child: ClipRect(
+            child: OverflowBox(
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _cameraController.value.previewSize!.height,
+                  height: _cameraController.value.previewSize!.width,
+                  child: CameraPreview(
+                    _cameraController,
+                    child: LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) {
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapDown: (details) => _onViewFinderTap(details, constraints),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
+  }
+
+  void _onViewFinderTap(TapDownDetails details, BoxConstraints constraints) {
+    if (_cameraController.value.isInitialized) {
+      final CameraController cameraController = _cameraController;
+      final Offset offset = Offset(
+        details.localPosition.dx / constraints.maxWidth,
+        details.localPosition.dy / constraints.maxHeight,
+      );
+      cameraController.setExposurePoint(offset);
+      cameraController.setFocusPoint(offset);
+    }
   }
 
   Future<void> _checkConnectivity() async {
@@ -428,14 +471,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       Icon(
                         _isError ? Icons.error_outline : Icons.info_outline,
                         color: _isError ? Colors.red : Colors.blue,
-                        size: 24,
+                        size: 28,  // 放大圖示
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _statusMessage,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,  // 放大字體
                             fontWeight: FontWeight.bold,
                             color: _isError ? Colors.red : Colors.blue,
                           ),
@@ -444,11 +487,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ],
                   ),
                 ),
-                Expanded(
-                  flex: 3,
-                  child: Container(  // 移除 Hero 標籤
-                    width: double.infinity,
-                    margin: const EdgeInsets.all(20),
+                // 調整預覽框大小
+                AspectRatio(
+                  aspectRatio: 4/5,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.blue, width: 3),
                       borderRadius: BorderRadius.circular(20),
@@ -476,7 +519,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       Icon(
                                         Icons.warning_amber_rounded,
                                         color: Colors.white,
-                                        size: 20,
+                                        size: 24,  // 放大圖示
                                       ),
                                       SizedBox(width: 8),
                                       Text(
@@ -484,17 +527,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 16,
+                                          fontSize: 22,  // 放大字體
                                         ),
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 4),
+                                  SizedBox(height: 6),
                                   Text(
                                     '請將單顆藥品放置框內，刻字面朝上',
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 14,
+                                      fontSize: 20,  // 放大字體
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -519,6 +562,38 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
+                const SizedBox(height: 20),  // 減少上方間距
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: AnimatedBuilder(
+                      animation: _buttonScaleAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _buttonScaleAnimation.value,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _captureImage,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.all(15),
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              elevation: 8,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Text(
+                              _isLoading ? '識別中...' : '點擊拍照',
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
@@ -607,37 +682,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         ),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: AnimatedBuilder(
-                      animation: _buttonScaleAnimation,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: _buttonScaleAnimation.value,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _captureImage,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.all(15),
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              elevation: 8,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            child: Text(
-                              _isLoading ? '識別中...' : '點擊拍照',
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
