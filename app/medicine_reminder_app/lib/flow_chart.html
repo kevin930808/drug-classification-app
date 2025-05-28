@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>藥物辨識助手 - 流程圖</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2196F3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .mermaid {
+            margin: 20px 0;
+        }
+        .description {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+        }
+        .mockup-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        .mockup {
+            width: 300px;
+            height: 600px;
+            background: white;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            border: 10px solid #333;
+        }
+        .mockup-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2196F3;
+            font-weight: bold;
+        }
+        .splash-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            padding: 20px;
+        }
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            background: #2196F3;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .app-icon i {
+            font-size: 60px;
+            color: white;
+        }
+        .app-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        .app-subtitle {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .progress-container {
+            width: 100%;
+            padding: 0 20px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .progress-fill {
+            width: 60%;
+            height: 100%;
+            background: #2196F3;
+            border-radius: 5px;
+        }
+        .progress-text {
+            font-size: 14px;
+            color: #2196F3;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .progress-percentage {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .version-info {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .home-screen {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .camera-view {
+            flex: 1;
+            background: #000;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .camera-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            border: 2px dashed #fff;
+            border-radius: 10px;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+        }
+        .action-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: #2196F3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>藥物辨識助手 - 應用程序流程圖</h1>
+        
+        <div class="description">
+            <h2>應用程序界面模擬</h2>
+            <p>以下是應用程序的主要界面模擬，展示了啟動畫面和主頁面的實際外觀。</p>
+        </div>
+
+        <div class="mockup-container">
+            <div class="mockup">
+                <div class="mockup-title">啟動畫面</div>
+                <div class="splash-screen">
+                    <div class="app-icon">
+                        <i class="fas fa-pills"></i>
+                    </div>
+                    <div class="app-name">藥物辨識助手</div>
+                    <div class="app-subtitle">幫助您識別藥物並獲取用藥資訊</div>
+                    <div class="progress-container">
+                        <div class="progress-text">初始化相機...</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="progress-percentage">60%</div>
+                    </div>
+                    <div class="version-info">
+                        v1.0.0 © 2023 藥物辨識系統
+                    </div>
+                </div>
+            </div>
+
+            <div class="mockup">
+                <div class="mockup-title">主頁面</div>
+                <div class="home-screen">
+                    <div class="camera-view">
+                        <div class="camera-overlay"></div>
+                    </div>
+                    <div class="action-buttons">
+                        <div class="action-button">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <div class="action-button">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <div class="action-button">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="description">
+            <h2>應用程序初始化流程</h2>
+            <p>此流程圖展示了藥物辨識助手的啟動和初始化過程，包括相機初始化、權限檢查等關鍵步驟。</p>
+        </div>
+
+        <div class="mermaid">
+            graph TD
+                A[應用啟動] --> B[初始化 Flutter 綁定]
+                B --> C[設置豎屏顯示]
+                C --> D[初始化相機]
+                D --> E[初始化 SharedPreferences]
+                E --> F[初始化 StorageService]
+                F --> G[顯示啟動畫面]
+                
+                G --> H{初始化進度}
+                H -->|10%| I[顯示初始化狀態]
+                H -->|20%| J[初始化存儲服務]
+                H -->|40%| K[檢查相機權限]
+                H -->|60%| L[初始化相機]
+                H -->|80%| M[載入用戶數據]
+                H -->|100%| N[準備就緒]
+                
+                N --> O[進入主頁面]
+                
+                H -->|錯誤| P[顯示錯誤信息]
+                P --> Q[顯示重試按鈕]
+                Q --> H
+        </div>
+
+        <div class="description">
+            <h2>啟動畫面 UI 元素</h2>
+            <p>啟動畫面包含以下主要元素：</p>
+            <ul>
+                <li>藥物圖標（120px）</li>
+                <li>應用名稱「藥物辨識助手」</li>
+                <li>副標題「幫助您識別藥物並獲取用藥資訊」</li>
+                <li>進度條顯示初始化進度</li>
+                <li>狀態信息顯示當前初始化步驟</li>
+                <li>版本信息（底部）</li>
+            </ul>
+        </div>
+
+        <div class="mermaid">
+            graph TD
+                A[啟動畫面] --> B[頂部區域]
+                A --> C[中間區域]
+                A --> D[底部區域]
+                
+                B --> B1[藥物圖標]
+                B --> B2[應用名稱]
+                B --> B3[副標題]
+                
+                C --> C1[進度條]
+                C --> C2[狀態信息]
+                C --> C3[進度百分比]
+                
+                D --> D1[版本信息]
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'services/storage_service.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 全局变量存储相机列表
 List<CameraDescription> cameras = [];
@@ -18,8 +19,14 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   
-  // 初始化相機
-  cameras = await availableCameras();
+  // 初始化相機（仅在非Web平台）
+  if (!kIsWeb) {
+    try {
+      cameras = await availableCameras();
+    } catch (e) {
+      print('相機初始化錯誤: $e');
+    }
+  }
   
   // 初始化 SharedPreferences
   final prefs = await SharedPreferences.getInstance();

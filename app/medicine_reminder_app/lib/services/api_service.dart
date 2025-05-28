@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import '../models/medicine.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://api.imgbb.com/1/upload';
-  static const String apiKey = 'df5b39833a7c5fcd28a7f78f9ce481d0';
+  static const String baseUrl = 'http://192.168.50.118:8000';
 
   Future<Map<String, dynamic>?> identifyMedicine(File imageFile) async {
     try {
@@ -19,18 +19,28 @@ class ApiService {
       final String localImagePath = await _saveImageLocally(imageFile);
       print('圖片已保存到本地: $localImagePath');
 
-      // 上傳圖片到服務器（如果有網絡）
-      String? remoteImageUrl;
+      // 上傳圖片到服務器
       try {
-        remoteImageUrl = await _uploadImageToServer(imageFile);
-        print('圖片已上傳到服務器: $remoteImageUrl');
+        var result = await _uploadImageToServer(imageFile);
+        print('API返回結果: $result');
+        
+        if (result != null) {
+          return {
+            'name': result['name'] ?? '未檢測到',
+            'shape': result['shape'] ?? '未檢測到',
+            'letter': result['letter'] ?? '未檢測到',
+            'color': result['color'] ?? '未檢測到',
+            'clinicalUse': '請諮詢醫師或藥師',
+            'usage': '請諮詢醫師或藥師',
+            'sideEffects': '請諮詢醫師或藥師',
+            'precautions': '請諮詢醫師或藥師',
+          };
+        }
       } catch (e) {
-        print('上傳到服務器失敗，將使用本地圖片: $e');
+        print('上傳到服務器失敗: $e');
       }
 
-      // 模擬 API 響應
-      await Future.delayed(const Duration(seconds: 2));
-      
+      // 如果API调用失败，返回默认数据
       return {
         'name': '普拿疼',
         'clinicalUse': '退燒止痛',
@@ -57,45 +67,51 @@ class ApiService {
     }
   }
 
-  Future<String?> _uploadImageToServer(File imageFile) async {
+  Future<Map<String, dynamic>?> _uploadImageToServer(File imageFile) async {
     try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl?key=$apiKey'),
+      // 检查并打印文件信息
+      final bool fileExists = await imageFile.exists();
+      final int fileSize = await imageFile.length();
+      print('文件是否存在: $fileExists, 文件大小: $fileSize 字节');
+      
+      // 构建请求URL
+      final uri = Uri.parse('$baseUrl/detect/');
+      print('请求URL: $uri');
+      
+      // 读取文件内容为字节数组
+      final bytes = await imageFile.readAsBytes();
+      print('已读取文件内容，大小: ${bytes.length} 字节');
+      
+      // 创建multipart请求
+      var request = http.MultipartRequest('POST', uri);
+      
+      // 添加文件，不指定contentType
+      var multipartFile = http.MultipartFile.fromBytes(
+        'file', // 确保参数名为'file'
+        bytes,
+        filename: path.basename(imageFile.path),
+        contentType: MediaType('image', 'jpeg') // 使用导入的MediaType
       );
-
-      if (kIsWeb) {
-        final bytes = await imageFile.readAsBytes();
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            'image',
-            bytes,
-            filename: 'medicine_image.jpg',
-          ),
-        );
-      } else {
-        var stream = http.ByteStream(imageFile.openRead());
-        var length = await imageFile.length();
-        request.files.add(
-          http.MultipartFile(
-            'image',
-            stream,
-            length,
-            filename: 'medicine_image.jpg',
-          ),
-        );
-      }
-
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
-
+      
+      request.files.add(multipartFile);
+      print('已添加文件到请求: ${multipartFile.filename}');
+      
+      // 发送请求
+      print('正在发送请求...');
+      final response = await request.send().timeout(Duration(seconds: 30));
+      print('收到响应，状态码: ${response.statusCode}');
+      
+      // 处理响应
+      final responseBody = await response.stream.bytesToString();
+      print('响应内容: $responseBody');
+      
       if (response.statusCode == 200) {
-        Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse.containsKey('data') && jsonResponse['data'].containsKey('url')) {
-          return jsonResponse['data']['url'];
-        }
+        Map<String, dynamic> jsonResponse = json.decode(responseBody);
+        return jsonResponse;
+      } else {
+        print('服务器返回错误: ${response.statusCode} - $responseBody');
+        return null;
       }
-      return null;
     } catch (e) {
       print('上傳圖片到服務器時發生錯誤: $e');
       return null;
