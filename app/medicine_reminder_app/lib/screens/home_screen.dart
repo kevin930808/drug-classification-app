@@ -609,7 +609,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 icon: const Icon(Icons.photo_library, size: 24),
                                 label: const Text(
                                   '相簿',
-                                  style: TextStyle(fontSize: 16),
+                                  style: TextStyle(fontSize: 20),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.all(12),
@@ -637,7 +637,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 icon: const Icon(Icons.history, size: 24),
                                 label: const Text(
                                   '歷史',
-                                  style: TextStyle(fontSize: 16),
+                                  style: TextStyle(fontSize: 20),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.all(12),
@@ -665,7 +665,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 icon: const Icon(Icons.star, size: 24),
                                 label: const Text(
                                   '常用',
-                                  style: TextStyle(fontSize: 16),
+                                  style: TextStyle(fontSize: 20),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.all(12),

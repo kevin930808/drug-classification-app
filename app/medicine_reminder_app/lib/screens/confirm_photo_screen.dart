@@ -17,13 +17,14 @@ class ConfirmPhotoScreen extends StatelessWidget {
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AspectRatio(
+              aspectRatio: 4/5,
               child: Container(
-                width: double.infinity,
-                margin: const EdgeInsets.all(20),
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.blue, width: 3),
                   borderRadius: BorderRadius.circular(20),
@@ -37,10 +38,8 @@ class ConfirmPhotoScreen extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               child: Row(
                 children: [
                   Expanded(
@@ -71,8 +70,8 @@ class ConfirmPhotoScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

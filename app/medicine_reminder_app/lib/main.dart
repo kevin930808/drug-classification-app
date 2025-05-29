@@ -164,7 +164,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ),
             const SizedBox(height: 20),
             const Text(
-              '藥物辨識助手',
+              '就視藥知道',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -239,7 +239,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             const Padding(
               padding: EdgeInsets.all(20),
               child: Text(
-                'v1.0.0 © 2023 藥物辨識系統',
+                'v1.0.0 © 2025 就視藥知道',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
