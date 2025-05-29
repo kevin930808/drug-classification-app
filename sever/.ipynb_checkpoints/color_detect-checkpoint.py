@@ -39,8 +39,8 @@ def process_image(image, model):
                         cls = int(box.cls.item())
                         class_name = result.names[cls]
                         confidence = box.conf.item()
-                        if class_name == "orange" and confidence < 0.3:
-                            class_name = "orange_pink"
+                        #if class_name == "orange" and confidence < 0.3:
+                            #class_name = "orange_pink"
                         detections.append((class_name, confidence))
                 return detections
         return []

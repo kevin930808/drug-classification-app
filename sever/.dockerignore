@@ -1,0 +1,20 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+*.ipynb
+.ipynb_checkpoints
+*.pt
+*.zip
+data base/
+data base photo/
+Model color v4訓練結果/
+Model color v5 training data set/
+model_刻字v3訓練結果/ 
