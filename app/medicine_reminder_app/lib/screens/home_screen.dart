@@ -14,6 +14,7 @@ import 'confirm_photo_screen.dart';
 import 'frequently_used_screen.dart';
 import '../main.dart' show cameras;
 import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 
 class HomeScreen extends StatefulWidget {
   final StorageService storageService;
@@ -39,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _rotationAnimationController;
   late Animation<double> _rotationAnimation;
   bool _showGuideline = true;  // 控制警語顯示
+  Offset _focusPoint = const Offset(0.5, 0.5);  // 對焦點位置
+  bool _showFocusAnimation = false;  // 控制對焦動畫顯示
 
   // 定義全局狀態文本變量
   String _statusMessage = '準備就緒，請將藥物放置在框內';
@@ -121,9 +124,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return;
       }
 
+      // 尋找最適合近物拍攝的鏡頭
+      CameraDescription? selectedCamera;
+      for (var camera in cameras) {
+        // 優先選擇後置鏡頭
+        if (camera.lensDirection == CameraLensDirection.back) {
+          selectedCamera = camera;
+          break;
+        }
+      }
+      
+      // 如果沒有找到後置鏡頭，使用第一個可用的鏡頭
+      selectedCamera ??= cameras[0];
+
       _cameraController = CameraController(
-        cameras[0],
-        ResolutionPreset.high,  // 使用高解析度預設值
+        selectedCamera,
+        ResolutionPreset.max,  // 使用最高解析度
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
@@ -133,7 +149,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // 優化相機設定
       await _cameraController.setFocusMode(FocusMode.auto);
       await _cameraController.setExposureMode(ExposureMode.auto);
-      await _cameraController.setFlashMode(FlashMode.auto);
+      await _cameraController.setFlashMode(FlashMode.off);  // 關閉閃光燈
+      
+      // 設置最小對焦距離和縮放
+      if (_cameraController.value.isInitialized) {
+        await _cameraController.setFocusPoint(const Offset(0.5, 0.5));
+        await _cameraController.setExposurePoint(const Offset(0.5, 0.5));
+        // 設置縮放比例為2.5倍
+        await _cameraController.setZoomLevel(2.5);
+      }
+      
+      // 啟動自動對焦
+      _startAutoFocus();
       
       if (mounted) {
         setState(() {
@@ -147,6 +174,55 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         );
       }
     }
+  }
+
+  // 自動對焦功能
+  void _startAutoFocus() {
+    // 每2秒自動對焦一次
+    Future.delayed(const Duration(seconds: 2), () {
+      if (_cameraController.value.isInitialized) {
+        _cameraController.setFocusPoint(const Offset(0.5, 0.5));
+        _cameraController.setFocusMode(FocusMode.auto);
+        _cameraController.setExposurePoint(const Offset(0.5, 0.5));
+        _cameraController.setExposureMode(ExposureMode.auto);
+      }
+      _startAutoFocus(); // 遞迴調用，持續自動對焦
+    });
+  }
+
+  // 手動對焦功能
+  void _onViewFinderTap(TapDownDetails details, BoxConstraints constraints) {
+    if (_cameraController.value.isInitialized) {
+      final CameraController cameraController = _cameraController;
+      final Offset offset = Offset(
+        details.localPosition.dx / constraints.maxWidth,
+        details.localPosition.dy / constraints.maxHeight,
+      );
+      cameraController.setExposurePoint(offset);
+      cameraController.setFocusPoint(offset);
+      
+      // 觸覺反饋
+      HapticFeedback.mediumImpact();
+      
+      // 顯示對焦動畫
+      _displayFocusAnimation(offset);
+    }
+  }
+
+  // 對焦動畫
+  void _displayFocusAnimation(Offset offset) {
+    setState(() {
+      _focusPoint = offset;
+      _showFocusAnimation = true;
+    });
+    
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        setState(() {
+          _showFocusAnimation = false;
+        });
+      }
+    });
   }
 
   // 模擬藥物數據
@@ -230,6 +306,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return;
     }
     
+    // 確保閃光燈關閉
+    await _cameraController.setFlashMode(FlashMode.off);
+    
     // 添加觸覺反饋
     HapticFeedback.mediumImpact();
     
@@ -237,11 +316,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _updateStatus('拍攝中...');
     
     try {
-      // 閃光效果
-      _flashAnimationController.forward().then((_) {
-        _flashAnimationController.reverse();
-      });
-      
       setState(() {
         _isLoading = true;
       });
@@ -249,8 +323,58 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // 開始旋轉動畫
       _rotationAnimationController.repeat();
       
-      // 捕獲圖像
+      // 捕獲圖像，使用最高品質設定
       final XFile photo = await _cameraController.takePicture();
+      
+      // 讀取照片並進行處理
+      final File photoFile = File(photo.path);
+      final List<int> imageBytes = await photoFile.readAsBytes();
+      
+      // 計算預覽框的實際大小和位置
+      final Size previewSize = _cameraController.value.previewSize!;
+      final double scale = 1.5; // 與預覽時的縮放比例相同
+      
+      // 計算裁切區域
+      final double cropWidth = previewSize.height / scale;
+      final double cropHeight = previewSize.width / scale;
+      final double cropX = (previewSize.height - cropWidth) / 2;
+      final double cropY = (previewSize.width - cropHeight) / 2;
+      
+      // 創建新的照片文件
+      final String newPath = '${photoFile.parent.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final File newPhotoFile = File(newPath);
+      
+      // 使用 image 套件處理圖片
+      final img.Image? originalImage = img.decodeImage(Uint8List.fromList(imageBytes));
+      if (originalImage != null) {
+        // 裁切圖片
+        final img.Image croppedImage = img.copyCrop(
+          originalImage,
+          x: cropX.toInt(),
+          y: cropY.toInt(),
+          width: cropWidth.toInt(),
+          height: cropHeight.toInt(),
+        );
+        
+        // 保存處理後的圖片，使用最高品質並保持原始色彩
+        final List<int> processedBytes = img.encodeJpg(croppedImage, quality: 100);
+        
+        // 直接使用原始圖片，避免任何色彩轉換
+        if (processedBytes.length > 0) {
+          // 創建新的圖片文件
+          final File processedFile = File(newPhotoFile.path);
+          await processedFile.writeAsBytes(processedBytes);
+          
+          // 確保文件權限正確
+          await processedFile.setLastModified(DateTime.now());
+        } else {
+          // 如果處理失敗，使用原始圖片
+          await newPhotoFile.writeAsBytes(imageBytes);
+        }
+      } else {
+        // 如果圖片處理失敗，直接複製原始圖片
+        await newPhotoFile.writeAsBytes(imageBytes);
+      }
       
       if (mounted) {
         // 停止旋轉動畫
@@ -260,16 +384,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           _isLoading = false;
         });
         
-        // 導航到確認頁面
+        // 導航到確認頁面，使用處理後的照片
         final bool? result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ConfirmPhotoScreen(photoFile: photo),
+            builder: (context) => ConfirmPhotoScreen(
+              photoFile: XFile(newPhotoFile.path),
+            ),
           ),
         );
         
         if (result == true) {
-          await _processImage(photo);
+          _updateStatus('處理中...');
+          await _processImage(XFile(newPhotoFile.path));
         } else {
           _updateStatus('已取消，請重新拍攝');
         }
@@ -297,23 +424,72 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
     
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 100,  // 使用最高品質
+      );
+      
       if (image != null) {
-        final bool? result = await Navigator.push<bool>(
-          context,
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 300),
-            pageBuilder: (context, animation, secondaryAnimation) {
-              return FadeTransition(
-                opacity: animation,
-                child: ConfirmPhotoScreen(photoFile: image),
-              );
-            },
-          ),
-        );
+        // 讀取並處理選擇的照片
+        final File imageFile = File(image.path);
+        final List<int> imageBytes = await imageFile.readAsBytes();
         
-        if (result == true) {
-          await _processImage(image);
+        // 使用 image 套件處理圖片
+        final img.Image? originalImage = img.decodeImage(Uint8List.fromList(imageBytes));
+        if (originalImage != null) {
+          // 創建新的照片文件
+          final String newPath = '${imageFile.parent.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final File newImageFile = File(newPath);
+          
+          // 保存處理後的圖片，使用最高品質
+          final List<int> processedBytes = img.encodeJpg(originalImage, quality: 100);
+          await newImageFile.writeAsBytes(processedBytes);
+          
+          final bool? result = await Navigator.push<bool>(
+            context,
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 300),
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ConfirmPhotoScreen(
+                    photoFile: XFile(newImageFile.path),
+                  ),
+                );
+              },
+            ),
+          );
+          
+          if (result == true) {
+            await _processImage(XFile(newImageFile.path));
+          }
+        } else {
+          // 如果圖片處理失敗，使用原始圖片
+          final bool? result = await Navigator.push<bool>(
+            context,
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 300),
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ConfirmPhotoScreen(
+                    photoFile: image,
+                  ),
+                );
+              },
+            ),
+          );
+          
+          if (result == true) {
+            await _processImage(image);
+          }
+        }
+        
+        // 重新初始化相機
+        if (mounted) {
+          await _initializeCamera();
         }
       }
     } catch (e) {
@@ -363,16 +539,42 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: SizedBox(
                   width: _cameraController.value.previewSize!.height,
                   height: _cameraController.value.previewSize!.width,
-                  child: CameraPreview(
-                    _cameraController,
-                    child: LayoutBuilder(
-                      builder: (BuildContext context, BoxConstraints constraints) {
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTapDown: (details) => _onViewFinderTap(details, constraints),
-                        );
-                      },
-                    ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Transform.scale(
+                        scale: 1.5, // 放大1.5倍
+                        child: Center(
+                          child: CameraPreview(
+                            _cameraController,
+                            child: LayoutBuilder(
+                              builder: (BuildContext context, BoxConstraints constraints) {
+                                return GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTapDown: (details) => _onViewFinderTap(details, constraints),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_showFocusAnimation)
+                        Positioned(
+                          left: _focusPoint.dx * _cameraController.value.previewSize!.height,
+                          top: _focusPoint.dy * _cameraController.value.previewSize!.width,
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.yellow,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -381,18 +583,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
       ),
     );
-  }
-
-  void _onViewFinderTap(TapDownDetails details, BoxConstraints constraints) {
-    if (_cameraController.value.isInitialized) {
-      final CameraController cameraController = _cameraController;
-      final Offset offset = Offset(
-        details.localPosition.dx / constraints.maxWidth,
-        details.localPosition.dy / constraints.maxHeight,
-      );
-      cameraController.setExposurePoint(offset);
-      cameraController.setFocusPoint(offset);
-    }
   }
 
   Future<void> _checkConnectivity() async {
@@ -453,7 +643,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('藥物辨識系統'),
+        title: const Text('就視藥知道'),
         centerTitle: true,
       ),
       body: SafeArea(

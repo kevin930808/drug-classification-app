@@ -188,6 +188,8 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                                 ? Image.file(
                                     File(widget.medicine.localImagePath!),
                                     fit: BoxFit.cover,
+                                    filterQuality: FilterQuality.high,
+                                    colorBlendMode: BlendMode.srcOver,
                                     errorBuilder: (context, error, stackTrace) {
                                       return const Center(
                                         child: Icon(

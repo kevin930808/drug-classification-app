@@ -9,7 +9,7 @@ import 'package:path/path.dart' as path;
 import '../models/medicine.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.50.118:8000';
+  static const String baseUrl = 'http://192.168.0.152:8000';
 
   Future<Map<String, dynamic>?> identifyMedicine(File imageFile) async {
     try {
@@ -22,7 +22,7 @@ class ApiService {
       // 上傳圖片到服務器
       try {
         var result = await _uploadImageToServer(imageFile);
-        print('API返回結果: $result');
+        print('API 回傳結果: $result');
         
         if (result != null) {
           return {
@@ -37,7 +37,7 @@ class ApiService {
           };
         }
       } catch (e) {
-        print('上傳到服務器失敗: $e');
+        print('上傳到伺服器失敗: $e');
       }
 
       // 如果API调用失败，返回默认数据
@@ -69,51 +69,51 @@ class ApiService {
 
   Future<Map<String, dynamic>?> _uploadImageToServer(File imageFile) async {
     try {
-      // 检查并打印文件信息
+      // 檢查並列印檔案資訊
       final bool fileExists = await imageFile.exists();
       final int fileSize = await imageFile.length();
-      print('文件是否存在: $fileExists, 文件大小: $fileSize 字节');
+      print('檔案是否存在: $fileExists, 檔案大小: $fileSize 位元組');
       
-      // 构建请求URL
+      // 構建請求 URL
       final uri = Uri.parse('$baseUrl/detect/');
-      print('请求URL: $uri');
+      print('請求 URL: $uri');
       
-      // 读取文件内容为字节数组
+      // 讀取檔案內容為位元組陣列
       final bytes = await imageFile.readAsBytes();
-      print('已读取文件内容，大小: ${bytes.length} 字节');
+      print('已讀取檔案內容，大小: ${bytes.length} 位元組');
       
-      // 创建multipart请求
+      // 建立 multipart 請求
       var request = http.MultipartRequest('POST', uri);
       
-      // 添加文件，不指定contentType
+      // 添加檔案，不指定 contentType
       var multipartFile = http.MultipartFile.fromBytes(
-        'file', // 确保参数名为'file'
+        'file', // 確保參數名為'file'
         bytes,
         filename: path.basename(imageFile.path),
-        contentType: MediaType('image', 'jpeg') // 使用导入的MediaType
+        contentType: MediaType('image', 'jpeg') // 使用導入的 MediaType
       );
       
       request.files.add(multipartFile);
-      print('已添加文件到请求: ${multipartFile.filename}');
+      print('已添加檔案到請求: ${multipartFile.filename}');
       
-      // 发送请求
-      print('正在发送请求...');
+      // 發送請求
+      print('正在發送請求...');
       final response = await request.send().timeout(Duration(seconds: 30));
-      print('收到响应，状态码: ${response.statusCode}');
+      print('收到回應，狀態碼: ${response.statusCode}');
       
-      // 处理响应
+      // 處理回應
       final responseBody = await response.stream.bytesToString();
-      print('响应内容: $responseBody');
+      print('回應內容: $responseBody');
       
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(responseBody);
         return jsonResponse;
       } else {
-        print('服务器返回错误: ${response.statusCode} - $responseBody');
+        print('伺服器回傳錯誤: ${response.statusCode} - $responseBody');
         return null;
       }
     } catch (e) {
-      print('上傳圖片到服務器時發生錯誤: $e');
+      print('上傳圖片到伺服器時發生錯誤: $e');
       return null;
     }
   }
